@@ -1,5 +1,4 @@
-# E_commerce
-THIS IS A PROJECT THAT WAS GIVEN TO US AS A ASSIGNMENT AND IT BASICALLY GIVES THE SRC CODE OF A ECOMMERCE WEBSITE
+
 
 
  PROJECT TITLE: AURIELA 
@@ -85,4 +84,4 @@ Icons: Heroicons (SVG)
 
 
 DEPLOYMENT LINK:
-https://e-commerce-lyart-xi-49.vercel.app/
+aurelia-decor.vercel.app
