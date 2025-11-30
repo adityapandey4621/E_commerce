@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurelia - Elegant Home Decor</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Cormorant Garamond (headings) and Lato (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom styles for fonts and animations */
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #fdfdfd; /* Slightly cleaner white background */
+        }
+        
+        h1, h2, h3, h4, h5, h6, .font-heading {
+            font-family: 'Cormorant Garamond', serif;
+            letter-spacing: 0.5px;
+        }
+
+        /* Page transition animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .page-view {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Hero text slide-in animation */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-slide-in-up {
+            animation: slideInUp 0.8s ease-out 0.2s forwards; /* Added a slight delay */
+        }
+
+        /* Hero image Ken Burns effect */
+        @keyframes kenburns {
+            0% {
+                transform: scale(1.1) translate(0, 0);
+            }
+            50% {
+                transform: scale(1.2) translate(5px, 5px);
+            }
+            100% {
+                transform: scale(1.1) translate(0, 0);
+            }
+        }
+        .animate-kenburns {
+            animation: kenburns 20s ease-in-out infinite;
+        }
+
+        /* Staggered load-in for product cards - New Animation */
+        @keyframes fadeInUpScale {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .product-card {
+            opacity: 0; /* Start hidden for animation */
+            animation: fadeInUpScale 0.6s ease-out forwards;
+        }
+
+        /* Custom notification toast */
+        #notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background-color: #0d9488; /* Teal */
+            color: white;
+            border-radius: 9999px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            transform: translateX(-50%) translateY(20px);
+        }
+        
+        #notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Active navigation link style */
+        .nav-link.active {
+            color: #0d9488; /* Teal */
+            font-weight: 700;
+        }
+
+        /* Quick View Modal Styles */
+        #quick-view-modal {
+            transition: opacity 0.3s ease-in-out;
+        }
+        #quick-view-modal-content {
+            transition: transform 0.3s ease-out;
+            transform: scale(0.95);
+        }
+        #quick-view-modal.show #quick-view-modal-content {
+            transform: scale(1);
+        }
+        
+        /* Product Category Filter Styles */
+        .category-tab {
+            transition: all 0.2s ease-in-out;
+        }
+        .category-tab.active {
+            background-color: #0d9488;
+            color: white;
+            box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2);
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Notification Toast (hidden by default) -->
+    <div id="notification">Item added to cart!</div>
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm">
+        <nav class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-2" onclick="showPage('home')">
+                <!-- Inline SVG Logo -->
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-teal-700">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.04 14.5C15.12 15.93 13.66 17 12 17C10.34 17 8.88 15.93 7.96 14.5C6.88 12.88 6.41 11.02 6.55 9.11C6.73 6.7 8.65 4.77 11 4.59C13.72 4.37 16.01 6.34 16.42 8.95C16.8 11.23 16.04 14.5 16.04 14.5Z" fill="currentColor" fill-opacity="0.3"/>
+                    <path d="M12 6C10.06 6.01 8.35 7.17 7.55 8.86C7.29 9.4 7.15 10.01 7.13 10.63C7.03 12.98 8.44 15.14 10.43 16.14C11.05 16.48 11.75 16.66 12.46 16.66C13.17 16.66 13.87 16.48 14.49 16.14C16.48 15.14 17.89 12.98 17.79 10.63C17.77 10.01 17.63 9.4 17.37 8.86C16.57 7.17 14.86 6.01 12.92 6H12Z" fill="currentColor"/>
+                </svg>
+                <span class="font-heading text-3xl font-bold text-gray-900">Aurelia</span>
+            </a>
+            
+            <!-- Navigation Links -->
+            <ul class="hidden md:flex space-x-6 sm:space-x-8 items-center">
+                <li><a href="#" class="nav-link text-gray-600 hover:text-gray-900 transition duration-200" data-page="home" onclick="showPage('home', this)">Home</a></li>
+                <li><a href="#" class="nav-link text-gray-600 hover:text-gray-900 transition duration-200" data-page="products" onclick="showPage('products', this)">Products</a></li>
+                <li><a href="#" class="nav-link text-gray-600 hover:text-gray-900 transition duration-200" data-page="about" onclick="showPage('about', this)">About Us</a></li>
+                <li><a href="#" class="nav-link text-gray-600 hover:text-gray-900 transition duration-200" data-page="contact" onclick="showPage('contact', this)">Contact</a></li>
+                <li><a href="#" class="nav-link text-gray-600 hover:text-gray-900 transition duration-200" data-page="tnc" onclick="showPage('tnc', this)">T&C</a></li>
+            </ul>
+
+            <!-- Search and Cart -->
+            <div class="flex items-center space-x-4">
+                <!-- Search Bar -->
+                <div class="relative">
+                    <input type="text" id="search-bar" placeholder="Search products..." class="border border-gray-300 rounded-full py-2 px-4 pl-10 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all w-32 md:w-48" onkeyup="handleSearch()">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+
+                <!-- Cart Icon -->
+                <button onclick="showPage('cart', this)" class="nav-link relative flex items-center text-gray-600 hover:text-gray-900 transition duration-200" data-page="cart">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                    <span id="cart-count" class="absolute -top-2 -right-3 bg-teal-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+
+        <!-- Page: Home -->
+        <div id="page-home" class="page-view">
+            <!-- Hero Section -->
+            <section class="relative rounded-lg overflow-hidden h-[70vh] flex items-center justify-center text-center text-white bg-gray-800">
+                <div class="absolute inset-0 overflow-hidden">
+                    <img src="https://placehold.co/1200x600/2d3748/fdfaf6?text=Elegant+Vase" alt="Elegant vase" class="absolute inset-0 w-full h-full object-cover opacity-50 animate-kenburns">
+                </div>
+                <div class="relative z-10 p-8">
+                    <h1 class="font-heading text-5xl md:text-7xl font-bold mb-4 animate-slide-in-up" style="opacity: 0; animation-delay: 0.2s;">Elevate Your Space</h1>
+                    <p class="text-lg md:text-xl mb-8 max-w-lg mx-auto animate-slide-in-up" style="opacity: 0; animation-delay: 0.4s;">Discover curated articles that bring elegance and comfort to your home.</p>
+                    <button onclick="showPage('products', document.querySelector('.nav-link[data-page=products]'))" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105 animate-slide-in-up" style="opacity: 0; animation-delay: 0.6s;">
+                        Shop Now
+                    </button>
+                </div>
+            </section>
+            
+            <!-- Featured Products -->
+            <section class="mt-20">
+                <h2 class="font-heading text-4xl font-bold text-center mb-12">Featured Collection</h2>
+                <div id="featured-products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Product cards will be injected here by JS -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Page: Products -->
+        <div id="page-products" class="page-view">
+            <h1 class="font-heading text-5xl font-bold text-center mb-12">All Products</h1>
+            
+            <!-- Category Filters -->
+            <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-12">
+                <button class="category-tab active" data-category="all" onclick="filterProducts('all', this)">All</button>
+                <button class="category-tab" data-category="living" onclick="filterProducts('living', this)">Living Room</button>
+                <button class="category-tab" data-category="kitchen" onclick="filterProducts('kitchen', this)">Kitchen</button>
+                <button class="category-tab" data-category="bedroom" onclick="filterProducts('bedroom', this)">Bedroom</button>
+                <button class="category-tab" data-category="decor" onclick="filterProducts('decor', this)">Decor</button>
+            </div>
+
+            <!-- Products Grid -->
+            <div id="all-products-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                <!-- Product cards will be injected here by JS -->
+            </div>
+            <p id="no-products-msg" class="text-center text-gray-500 py-16 text-xl hidden">No products found matching your search.</p>
+        </div>
+
+        <!-- Page: About Us -->
+        <div id="page-about" class="page-view">
+            <h1 class="font-heading text-5xl font-bold text-center mb-12">About Aurelia</h1>
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-sm">
+                <img src="https://placehold.co/800x400/f0f4f8/333?text=Our+Workshop" alt="Our Workshop" class="rounded-lg mb-8 w-full h-64 object-cover">
+                <h2 class="font-heading text-3xl font-bold mb-4">Crafting Homes, Not Houses</h2>
+                <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                    Welcome to Aurelia, your new abode for finding curated, elegant, and timeless home decor. Born from a passion for artistry and the quiet comfort of a well-designed space, Aurelia (from Latin 'aureus' - golden) represents the golden touch we aim to bring to your home.
+                </p>
+                <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                    We partner with independent artisans and the finest workshops to source items that tell a story. From hand-thrown pottery to sustainably sourced linen, every piece in our collection is chosen for its quality, beauty, and ability to transform a room.
+                </p>
+                <p class="text-lg text-gray-700 leading-relaxed">
+                    Our mission is simple: to bring you a collection that feels both modern and timeless, allowing you to build a home that is uniquely yours.
+                </p>
+            </div>
+        </div>
+
+        <!-- Page: Contact Us -->
+        <div id="page-contact" class="page-view">
+            <h1 class="font-heading text-5xl font-bold text-center mb-12">Get In Touch</h1>
+            <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-sm">
+                <p class="text-center text-lg text-gray-700 mb-8">Have a question about your order or a query about our products? Fill out the form below, and our team will get back to you within 24 hours.</p>
+                <form action="#" method="POST" onsubmit="handleContactSubmit(event)">
+                    <div class="space-y-6">
+                        <div>
+                            <label for="contact-name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                            <input type="text" id="contact-name" name="name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-3 px-4 focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label for="contact-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" id="contact-email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-3 px-4 focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div>
+                            <label for="contact-message" class="block text-sm font-medium text-gray-700">Message</label>
+                            <textarea id="contact-message" name="message" rows="5" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-3 px-4 focus:ring-teal-500 focus:border-teal-500"></textarea>
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300">
+                                Send Message
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Page: Terms & Conditions -->
+        <div id="page-tnc" class="page-view">
+            <h1 class="font-heading text-5xl font-bold text-center mb-12">Terms & Conditions</h1>
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-sm prose lg:prose-lg">
+                <p>Welcome to Aurelia. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our privacy policy govern Aurelia's relationship with you in relation to this website.</p>
+
+                <h2>1. Definitions</h2>
+                <p>The term 'Aurelia' or 'us' or 'we' refers to the owner of the website. The term 'you' refers to the user or viewer of our website. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero.</p>
+
+                <h2>2. Use of the Website</h2>
+                <p>The content of the pages of this website is for your general information and use only. It is subject to change without notice. Sed cursus ante dapibus diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed augue semper porta.</p>
+                <ul>
+                    <li>Unauthorized use of this website may give rise to a claim for damages and/or be a criminal offense.</li>
+                    <li>From time to time, this website may also include links to other websites. These links are provided for your convenience to provide further information.</li>
+                </ul>
+
+                <h2>3. Product Information</h2>
+                <p>Morbi in sem quis dui placerat ornare. Pellentesque odio nisi, euismod in, pharetra a, ultricies in, diam. Sed arcu. Cras consequat. Nam nec ante. Sed lacinia, urna non tincidunt mattis, tortor neque adipiscing diam, a cursus ipsum ante quis turpis.</p>
+                
+                <h2>4. Limitation of Liability</h2>
+                <p>In no event shall we be liable for any direct, indirect, special, punitive, incidental, exemplary or consequential damages, or any damages whatsoever, even if we have been previously advised of the possibility of such damages, whether in an action under contract, negligence, or any other theory, arising out of or in connection with the use, inability to use, or performance of the information, services, products, and materials available from this site.</p>
+            </div>
+        </div>
+        
+        <!-- Page: Cart -->
+        <div id="page-cart" class="page-view">
+            <h1 class="font-heading text-5xl font-bold text-center mb-12">Your Cart</h1>
+            <div class="max-w-4xl mx-auto">
+                
+                <!-- Cart Items Container -->
+                <div id="cart-items-container" class="space-y-6">
+                    <!-- Cart items will be injected here by JS -->
+                </div>
+                
+                <!-- Empty Cart Message -->
+                <div id="cart-empty-msg" class="text-center text-gray-500 py-16">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <p class="mt-4 text-xl">Your cart is currently empty.</p>
+                    <button onclick="showPage('products', document.querySelector('.nav-link[data-page=products]'))" class="mt-6 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-6 rounded-lg text-lg transition duration-300">
+                        Start Shopping
+                    </button>
+                </div>
+                
+                <!-- Cart Summary (shown if cart is not empty) -->
+                <div id="cart-summary" class="hidden mt-12 pt-8 border-t-2 border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-medium text-gray-600">Total:</span>
+                        <span id="cart-total" class="font-heading text-4xl font-bold text-gray-900">₹0.00</span>
+                    </div>
+                    <button onclick="checkout()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 px-8 rounded-lg text-xl transition duration-300 mt-8">
+                        Proceed to Checkout
+                    </button>
+                    <p class="text-center text-sm text-gray-500 mt-4">(This is a demo. Checkout is not functional.)</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 mt-24">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row justify-between items-center">
+            <p class="text-center md:text-left">&copy; 2025 Aurelia Home Decor. All rights reserved.</p>
+            <ul class="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4 md:mt-0">
+                <li><a href="#" class="hover:text-white transition duration-200">Privacy Policy</a></li>
+                <li><a href="#" class="hover:text-white transition duration-200" onclick="showPage('tnc', document.querySelector('.nav-link[data-page=tnc]'))">Terms of Use</a></li>
+                <li><a href="#" class="hover:text-white transition duration-200" onclick="showPage('about', document.querySelector('.nav-link[data-page=about]'))">About Us</a></li>
+                <li><a href="#" class="hover:text-white transition duration-200" onclick="showPage('contact', document.querySelector('.nav-link[data-page=contact]'))">Contact</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Quick View Modal -->
+    <div id="quick-view-modal" class="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4 opacity-0 pointer-events-none" onclick="closeQuickView()">
+        <div id="quick-view-modal-content" class="bg-white w-full max-w-5xl h-[90vh] rounded-lg shadow-xl overflow-hidden" onclick="event.stopPropagation()">
+            
+            <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10" onclick="closeQuickView()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 h-full">
+                <!-- Modal Image -->
+                <div class="p-4 bg-gray-100 flex items-center justify-center h-full">
+                    <img id="modal-image" src="https://placehold.co/600x600/f0f4f8/333?text=Product" alt="Product Image" class="w-full h-auto max-h-[80vh] object-contain rounded-lg">
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="p-8 flex flex-col overflow-y-auto h-full">
+                    <div>
+                        <p id="modal-brand" class="text-teal-600 font-semibold mb-2">Brand Name</p>
+                        <h2 id="modal-title" class="font-heading text-4xl font-bold text-gray-900 mb-4">Product Title</h2>
+                        
+                        <!-- Rating -->
+                        <div class="flex items-center mb-4">
+                            <span id="modal-rating-value" class="text-lg font-bold text-gray-800 mr-2">4.5</span>
+                            <div id="modal-rating-stars" class="flex text-yellow-400">
+                                <!-- Stars will be injected here -->
+                            </div>
+                            <span id="modal-rating-count" class="text-gray-500 ml-2">(120 ratings)</span>
+                        </div>
+
+                        <!-- Price Block -->
+                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                            <div class="flex items-baseline">
+                                <span id="modal-price" class="text-4xl font-bold text-teal-700">₹0.00</span>
+                                <span id="modal-save-percent" class="text-2xl text-red-600 font-medium ml-4">-83%</span>
+                            </div>
+                            <div class="text-gray-500">
+                                <span>M.R.P.: </span>
+                                <span id="modal-old-price" class="line-through">₹0.00</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Inclusive of all taxes</p>
+                            <p class="text-green-600 font-medium mt-1">You Save: <span id="modal-save-amount">₹0.00</span></p>
+                        </div>
+
+                        <!-- Service Badges -->
+                        <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                            <div class="border p-2 rounded-lg">
+                                <span class="text-teal-600 text-sm font-medium">7-Day Replacement</span>
+                            </div>
+                            <div class="border p-2 rounded-lg">
+                                <span class="text-teal-600 text-sm font-medium">Free Delivery</span>
+                            </div>
+                            <div class="border p-2 rounded-lg">
+                                <span class="text-teal-600 text-sm font-medium">Aurelia Assured</span>
+                            </div>
+                        </div>
+
+                        <!-- Variants -->
+                        <div id="modal-variants-container" class="mb-6">
+                            <!-- Variant options will be injected here -->
+                        </div>
+
+                        <!-- About this item -->
+                        <div class="mb-6">
+                            <h4 class="font-heading text-xl font-bold mb-2">About this item</h4>
+                            <ul id="modal-about-list" class="list-disc list-inside text-gray-700 space-y-1">
+                                <!-- About points will be injected here -->
+                            </ul>
+                        </div>
+                        
+                        <!-- Product Information -->
+                        <div class="mb-6">
+                            <h4 class="font-heading text-xl font-bold mb-2">Product Information</h4>
+                            <table class="w-full text-sm">
+                                <tbody id="modal-specs-table" class="divide-y">
+                                    <!-- Specs will be injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add to Cart Button (Sticky at bottom) -->
+                    <div class="mt-auto pt-6 border-t -mx-8 px-8 pb-8 bg-white sticky bottom-0">
+                        <button id="modal-add-to-cart" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Product Database ---
+        const allProducts = [
+            { id: 1, name: 'Artisan Ceramic Mug', brand: 'Artful Home', price: 3499, oldPrice: 4999, category: 'kitchen', image: '1.png', rating: 4.5, reviews: 120, variants: ['Cream', 'Teal', 'Charcoal'],
+              description: [
+                'HANDCRAFTED ARTISANRY: Each mug is uniquely hand-thrown and glazed by skilled potters.',
+                'PREMIUM CERAMIC: Made from durable, high-fired ceramic. Microwave and dishwasher safe.',
+                'ERGONOMIC HANDLE: Designed for a comfortable and sturdy grip.',
+                'PERFECT CAPACITY: Holds 350ml (12 oz), ideal for coffee, tea, or cocoa.'
+              ],
+              specs: { "Material": "High-Fired Ceramic", "Capacity": "350ml / 12 oz", "Dimensions": "4\" H x 3.5\" W", "Origin": "India" }
+            },
+            { id: 2, name: 'Soft Linen Throw', brand: 'Cozy Linens', price: 8999, oldPrice: 11999, category: 'bedroom', image: '2.png', rating: 4.8, reviews: 85,
+              description: [
+                '100% PURE LINEN: Crafted from the finest European flax, known for its softness and durability.',
+                'BREATHABLE COMFORT: Naturally thermoregulating, keeping you cool in summer and warm in winter.',
+                'ELEGANT & VERSATILE: Features a subtle texture and fringed edges. Perfect for beds, sofas, or as a picnic blanket.',
+                'SUSTAINABLY MADE: Oeko-Tex Standard 100 certified, free from harmful substances.'
+              ],
+              specs: { "Material": "100% European Linen", "Dimensions": "130cm x 170cm", "Care": "Machine wash cold, tumble dry low" }
+            },
+            { id: 3, name: 'Carved Walnut Tray', brand: 'Timber & Tone', price: 6499, oldPrice: 8999, category: 'living', image: '3.jpg', rating: 4.6, reviews: 92,
+              description: [
+                'SOLID WALNUT WOOD: Made from premium, solid walnut with a beautiful natural grain.',
+                'HAND-CARVED DETAILS: Features an intricate, hand-carved rim for a touch of elegance.',
+                'MULTI-PURPOSE: Ideal for serving drinks, organizing essentials on a coffee table, or as a decorative piece.',
+                'FOOD-SAFE FINISH: Treated with a natural, food-safe oil. Easy to clean.'
+              ],
+              specs: { "Material": "Solid Walnut", "Dimensions": "18\" L x 12\" W x 2\" H", "Finish": "Natural Food-Safe Oil" }
+            },
+            { id: 4, name: 'Modern Brass Lamp', brand: 'Lumina Decor', price: 12999, oldPrice: 15999, category: 'living', image: '4.jpg', rating: 4.3, reviews: 45,
+              description: [
+                'MINIMALIST DESIGN: Sleek lines and a minimalist profile fit any modern or mid-century decor.',
+                'SOLID BRASS BASE: Features a heavy, weighted base made of real brass for stability.',
+                'WARM AMBIENCE: Paired with a linen-textured drum shade for a soft, warm glow.',
+                'EASY TO USE: Includes an in-line switch and is compatible with E27 bulbs (not included).'
+              ],
+              specs: { "Base Material": "Solid Brass", "Shade": "Linen Fabric", "Height": "24 inches", "Bulb": "E27 (Max 60W)" }
+            },
+            { id: 5, name: 'Sandalwood Candle', brand: 'Aroma Living', price: 2999, oldPrice: 3499, category: 'decor', image: '5.jpg', rating: 4.7, reviews: 230,
+              description: [
+                'RICH & WARM SCENT: A complex blend of warm sandalwood, creamy vanilla, and a hint of spice.',
+                'NATURAL SOY WAX: Made with 100% natural soy wax for a clean, long-lasting burn.',
+                '50-HOUR BURN TIME: Enjoy over 50 hours of fragrance from this 8 oz candle.',
+                'REUSABLE JAR: Comes in a stylish, reusable amber glass jar with a metal lid.'
+              ],
+              specs: { "Wax": "100% Soy Wax", "Scent": "Sandalwood & Vanilla", "Burn Time": "Approx. 50 Hours", "Size": "8 oz" }
+            },
+            { id: 6, name: 'Smoked Glass Vase', brand: 'Artful Home', price: 4999, oldPrice: 6999, category: 'decor', image: '6.jpg', rating: 4.4, reviews: 68,
+              description: [
+                'ELEGANT SMOKED GLASS: Features a beautiful, translucent grey smoke finish.',
+                'MID-CENTURY MODERN: A sculptural, organic shape that makes a statement even without flowers.',
+                'HAND-BLOWN GLASS: Each vase is hand-blown, resulting in slight, unique variations.',
+                'STABLE BASE: Designed with a weighted bottom for stability.'
+              ],
+              specs: { "Material": "Hand-Blown Glass", "Color": "Smoked Grey", "Height": "10 inches" }
+            },
+            { id: 7, name: 'Acacia Wood Bowls', brand: 'Timber & Tone', price: 4299, oldPrice: 5999, category: 'kitchen', image: '7.jpg', rating: 4.9, reviews: 150,
+              description: [
+                'SET OF FOUR: Includes four nesting bowls for easy storage. Perfect for salads, snacks, or prep.',
+                'SUSTAINABLE ACACIA: Crafted from durable and sustainable acacia wood with a rich, varied grain.',
+                'FOOD-SAFE: Finished with a food-grade, non-toxic oil.',
+                'EASY CARE: Hand wash only to maintain the wood\'s natural beauty.'
+              ],
+              specs: { "Material": "Acacia Wood", "Included": "4 Bowls (10\", 8\", 6\", 4\")", "Care": "Hand wash only" }
+            },
+            { id: 8, name: 'Tufted Velvet Pillow', brand: 'Cozy Linens', price: 3999, oldPrice: 4999, category: 'bedroom', image: '8.jpg', rating: 4.7, reviews: 77,
+              description: [
+                'PLUSH VELVET: Made from high-quality, soft-touch velvet for a luxurious feel.',
+                'CLASSIC TUFTED DESIGN: Features a timeless center-tufted button design.',
+                'RICH EMERALD COLOR: A deep, jewel-toned green that adds a pop of color to any room.',
+                'INCLUDES INSERT: Comes with a plush, hypoallergenic poly-fill insert.'
+              ],
+              specs: { "Material": "Velvet (Polyester)", "Insert": "Hypoallergenic Poly-fill", "Dimensions": "18\" x 18\"" }
+            }
+        ];
+
+        // --- State ---
+        let cart = [];
+        let currentPage = 'home';
+        
+        // --- DOM Elements ---
+        const pages = document.querySelectorAll('.page-view');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const cartCountEl = document.getElementById('cart-count');
+        const cartItemsContainer = document.getElementById('cart-items-container');
+        const cartEmptyMsg = document.getElementById('cart-empty-msg');
+        const cartSummary = document.getElementById('cart-summary');
+        const cartTotalEl = document.getElementById('cart-total');
+        const notificationEl = document.getElementById('notification');
+        const featuredProductsGrid = document.getElementById('featured-products-grid');
+        const allProductsGrid = document.getElementById('all-products-grid');
+        const noProductsMsg = document.getElementById('no-products-msg');
+        const quickViewModal = document.getElementById('quick-view-modal');
+        const quickViewModalContent = document.getElementById('quick-view-modal-content');
+        const searchBar = document.getElementById('search-bar');
+
+        // --- Functions ---
+        
+        /**
+         * Shows a specific page by ID and hides all others.
+         * Updates the active state of navigation links.
+         */
+        function showPage(pageId, clickedLink = null) {
+            // Find the link to activate, either by click or by pageId
+            const linkToActivate = clickedLink || document.querySelector(`.nav-link[data-page="${pageId}"]`);
+            
+            // Update nav link active state
+            navLinks.forEach(link => link.classList.remove('active'));
+            if (linkToActivate) {
+                linkToActivate.classList.add('active');
+            }
+            
+            // Hide all pages
+            pages.forEach(page => {
+                page.style.display = 'none';
+            });
+            
+            // Show the target page
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) {
+                targetPage.style.display = 'block';
+                currentPage = pageId;
+                window.scrollTo(0, 0); // Scroll to top on page change
+            }
+            
+            // Special handling for pages
+            if (pageId === 'cart') {
+                updateCartDisplay();
+            }
+            if (pageId === 'products') {
+                // Reset to 'all' filter when navigating to products page
+                filterProducts('all', document.querySelector('.category-tab[data-category="all"]'));
+                searchBar.value = ''; // Clear search bar
+            }
+        }
+
+        /**
+         * Renders product cards into a specified container.
+         */
+        function renderProducts(productsToRender, container) {
+            container.innerHTML = ''; // Clear existing products
+            if (productsToRender.length === 0) {
+                noProductsMsg.style.display = 'block';
+            } else {
+                noProductsMsg.style.display = 'none';
+            }
+
+            productsToRender.forEach((product, index) => {
+                const saveAmount = product.oldPrice - product.price;
+                const savePercent = Math.round((saveAmount / product.oldPrice) * 100);
+
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card bg-white rounded-lg shadow-sm overflow-hidden group transition-all duration-300 hover:shadow-xl'; // Removed hover:shadow-xl from here, will be in HTML
+                productCard.style.animationDelay = `${index * 100}ms`; // Staggered animation
+                productCard.setAttribute('data-category', product.category);
+                productCard.setAttribute('data-name', product.name.toLowerCase());
+                
+                productCard.innerHTML = `
+                    <div class="relative overflow-hidden cursor-pointer" onclick="openQuickView(${product.id})">
+                        <img src="${product.image.replace(/_/g, '.')}" alt="${product.name}" class="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105">
+                        <span class="absolute top-4 left-4 bg-green-600 text-white text-xs font-bold py-1 px-3 rounded-full">${savePercent}% OFF</span>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="font-heading text-2xl font-bold mb-2 cursor-pointer" onclick="openQuickView(${product.id})">${product.name}</h3>
+                        
+                        <!-- Rating Stars -->
+                        <div class="flex items-center mb-2">
+                            <span class="text-sm font-bold text-gray-700 mr-1">${product.rating}</span>
+                            <div class="flex text-yellow-400">
+                                ${generateRatingStars(product.rating)}
+                            </div>
+                            <span class="text-xs text-gray-500 ml-2">(${product.reviews})</span>
+                        </div>
+
+                        <div class="flex items-baseline mb-4">
+                            <span class="text-2xl font-bold text-teal-700">₹${product.price.toLocaleString('en-IN')}</span>
+                            <span class="text-md text-gray-500 line-through ml-2">₹${product.oldPrice.toLocaleString('en-IN')}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">You save ₹${saveAmount.toLocaleString('en-IN')}</p>
+                        <button onclick="addToCart(${product.id})" class="w-full bg-gray-800 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-900 transition duration-200">
+                            Add to Cart
+                        </button>
+                    </div>
+                `;
+                container.appendChild(productCard);
+            });
+        }
+
+        /**
+         * Generates star icons based on a rating.
+         */
+        function generateRatingStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= rating) {
+                    stars += '<svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 7.09l6.572-.955L10 0l2.939 6.135 6.572.955-4.756 4.455 1.123 6.545z"/></svg>';
+                } else if (i - 0.5 <= rating) {
+                    stars += '<svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 7.09l6.572-.955L10 0l2.939 6.135 6.572.955-4.756 4.455 1.123 6.545z M10 12.83V0L7.53 5.16l-5.34.77 3.86 3.6- .91 5.32L10 12.83z"/></svg>';
+                } else {
+                    stars += '<svg class="w-4 h-4 fill-current text-gray-300" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 7.09l6.572-.955L10 0l2.939 6.135 6.572.955-4.756 4.455 1.123 6.545z"/></svg>';
+                }
+            }
+            return stars;
+        }
+
+        /**
+         * Filters products by category on the Products page.
+         */
+        function filterProducts(category, clickedTab) {
+            // Update active tab
+            document.querySelectorAll('.category-tab').forEach(tab => tab.classList.remove('active'));
+            clickedTab.classList.add('active');
+
+            const searchTerm = searchBar.value.toLowerCase();
+            
+            let filteredList = allProducts;
+
+            // 1. Filter by Category
+            if (category !== 'all') {
+                filteredList = filteredList.filter(product => product.category === category);
+            }
+
+            // 2. Filter by Search Term
+            if (searchTerm) {
+                filteredList = filteredList.filter(product => product.name.toLowerCase().includes(searchTerm));
+            }
+            
+            renderProducts(filteredList, allProductsGrid);
+        }
+
+        /**
+         * Handles search input on keyup.
+         */
+        function handleSearch() {
+            // Show products page if not already on it
+            if (currentPage !== 'products') {
+                showPage('products', document.querySelector('.nav-link[data-page=products]'));
+            }
+            
+            const searchTerm = searchBar.value.toLowerCase();
+            const activeCategory = document.querySelector('.category-tab.active').dataset.category;
+            
+            let filteredList = allProducts;
+
+            // 1. Filter by Category
+            if (activeCategory !== 'all') {
+                filteredList = filteredList.filter(product => product.category === activeCategory);
+            }
+
+            // 2. Filter by Search Term
+            if (searchTerm) {
+                filteredList = filteredList.filter(product => product.name.toLowerCase().includes(searchTerm));
+            }
+
+            renderProducts(filteredList, allProductsGrid);
+        }
+
+        /**
+         * Opens the Quick View modal with a specific product's details.
+         */
+        function openQuickView(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            const saveAmount = product.oldPrice - product.price;
+            const savePercent = Math.round((saveAmount / product.oldPrice) * 100);
+
+            // Populate basic info
+            document.getElementById('modal-image').src = product.image.replace(/_/g, '.');
+            document.getElementById('modal-brand').innerText = product.brand;
+            document.getElementById('modal-title').innerText = product.name;
+
+            // Populate rating
+            document.getElementById('modal-rating-value').innerText = product.rating;
+            document.getElementById('modal-rating-stars').innerHTML = generateRatingStars(product.rating);
+            document.getElementById('modal-rating-count').innerText = `(${product.reviews} ratings)`;
+
+            // Populate price block
+            document.getElementById('modal-price').innerText = `₹${product.price.toLocaleString('en-IN')}`;
+            document.getElementById('modal-old-price').innerText = `₹${product.oldPrice.toLocaleString('en-IN')}`;
+            document.getElementById('modal-save-percent').innerText = `-${savePercent}%`;
+            document.getElementById('modal-save-amount').innerText = `₹${saveAmount.toLocaleString('en-IN')}`;
+
+            // Populate "About this item"
+            const aboutList = document.getElementById('modal-about-list');
+            aboutList.innerHTML = '';
+            product.description.forEach(point => {
+                const li = document.createElement('li');
+                li.innerText = point;
+                aboutList.appendChild(li);
+            });
+
+            // Populate "Product Information" table
+            const specsTable = document.getElementById('modal-specs-table');
+            specsTable.innerHTML = '';
+            for (const [key, value] of Object.entries(product.specs)) {
+                const tr = document.createElement('tr');
+                tr.className = 'even:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="py-2 px-4 font-medium text-gray-500">${key}</td>
+                    <td class="py-2 px-4 text-gray-800">${value}</td>
+                `;
+                specsTable.appendChild(tr);
+            }
+
+            // Populate Variants
+            const variantsContainer = document.getElementById('modal-variants-container');
+            variantsContainer.innerHTML = '';
+            if (product.variants && product.variants.length > 0) {
+                const variantsHtml = `
+                    <h4 class="font-heading text-xl font-bold mb-2">Color</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${product.variants.map((variant, index) => `
+                            <button class="border ${index === 0 ? 'border-teal-600 ring-2 ring-teal-300' : 'border-gray-300'} rounded-lg py-2 px-4 text-sm font-medium hover:border-gray-500">
+                                ${variant}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                variantsContainer.innerHTML = variantsHtml;
+            }
+            
+            // Update Add to Cart button to pass the correct ID
+            document.getElementById('modal-add-to-cart').onclick = () => {
+                addToCart(product.id);
+                closeQuickView();
+            };
+
+            quickViewModal.classList.add('show');
+            quickViewModal.classList.remove('opacity-0', 'pointer-events-none');
+            quickViewModalContent.classList.remove('scale-95');
+        }
+
+        /**
+         * Closes the Quick View modal.
+         */
+        function closeQuickView() {
+            quickViewModal.classList.remove('show');
+            quickViewModal.classList.add('opacity-0', 'pointer-events-none');
+            quickViewModalContent.classList.add('scale-95');
+        }
+
+        /**
+         * Adds a product to the cart state and updates the UI.
+         */
+        function addToCart(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            cart.push(product);
+            
+            // Update cart count in nav
+            cartCountEl.innerText = cart.length;
+            
+            // Show notification
+            showNotification(`Added ${product.name} to cart!`);
+            
+            // Update cart display if we are on the cart page
+            if (currentPage === 'cart') {
+                updateCartDisplay();
+            }
+        }
+
+        /**
+         * Removes an item from the cart by its index.
+         */
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartDisplay();
+            cartCountEl.innerText = cart.length;
+        }
+
+        /**
+         * Renders the cart items and summary based on the cart state.
+         */
+        function updateCartDisplay() {
+            // Clear current items
+            cartItemsContainer.innerHTML = '';
+            
+            if (cart.length === 0) {
+                cartEmptyMsg.style.display = 'block';
+                cartSummary.style.display = 'none';
+            } else {
+                cartEmptyMsg.style.display = 'none';
+                cartSummary.style.display = 'block';
+                
+                let total = 0;
+                
+                cart.forEach((item, index) => {
+                    total += item.price;
+                    
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'flex items-center justify-between bg-white p-4 rounded-lg shadow-sm';
+                    itemEl.innerHTML = `
+                        <div class="flex items-center">
+                            <img src="${item.image.replace(/_/g, '.')}" alt="${item.name}" class="w-20 h-20 rounded-md object-cover mr-4">
+                            <div>
+                                <h3 class="font-heading text-xl font-bold">${item.name}</h3>
+                                <p class="text-gray-600">₹${item.price.toLocaleString('en-IN')}</p>
+                            </div>
+                        </div>
+                        <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 font-medium">
+                            Remove
+                        </button>
+                    `;
+                    cartItemsContainer.appendChild(itemEl);
+                });
+                
+                cartTotalEl.innerText = `₹${total.toLocaleString('en-IN')}`;
+            }
+        }
+        
+        /**
+         * Shows a notification message for a few seconds.
+         */
+        function showNotification(message) {
+            notificationEl.innerText = message;
+            notificationEl.classList.add('show');
+            
+            setTimeout(() => {
+                notificationEl.classList.remove('show');
+            }, 3000);
+        }
+
+        /**
+         * Simulates a checkout action.
+         */
+        function checkout() {
+            showNotification('Thank you for your (demo) order!');
+            cart = [];
+            cartCountEl.innerText = '0';
+            updateCartDisplay();
+        }
+
+        /**
+         * Simulates submitting the contact form.
+         */
+        function handleContactSubmit(event) {
+            event.preventDefault(); // Prevent actual form submission
+            showNotification('Thank you! Your message has been sent.');
+            // Clear the form
+            event.target.reset();
+        }
+
+        // --- Initialization ---
+        
+        // Show the home page by default and render initial products
+        document.addEventListener('DOMContentLoaded', () => {
+            // Render featured products (first 3)
+            renderProducts(allProducts.slice(0, 3), featuredProductsGrid);
+            // Render all products on the products page
+            renderProducts(allProducts, allProductsGrid);
+            
+            showPage('home', document.querySelector('.nav-link[data-page=home]'));
+        });
+    </script>
+</body>
+</html>
